@@ -554,7 +554,7 @@ Custom property | Description | Default
             this._trackX(event);
             break;
           case 'end':
-            this._trackEnd(event);
+            this._trackEnd();
             break;
         }
       },
@@ -597,7 +597,7 @@ Custom property | Description | Default
         this.translate3d(translateX + 'px', 0, 0, this.activeKnob);
       },
 
-      _trackEnd: function(e) {
+      _trackEnd: function() {
         var s = this.activeKnob.style;
         this.activeKnob.classList.remove('dragging');
         this._setDragging(false);
