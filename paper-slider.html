@@ -304,6 +304,7 @@ Custom property | Description | Default
     <div id="sliderContainer"
       class$="[[_getClassNames(disabled, pin, snaps, immediateValue, min, expand, dragging, transiting, editable)]]">
       <div class="bar-container">
+                <!-- immediateValue linked to value!!! -->
         <paper-progress
           disabled$="[[disabled]]"
           id="sliderBar"
@@ -327,7 +328,9 @@ Custom property | Description | Default
         </div>
       </template>
 
-      <div class="sliderKnob"
+      <div
+        id="first" 
+        class="sliderKnob"
         on-down="_knobdown"
         on-up="_resetKnob"
         on-track="_onTrack"
@@ -358,10 +361,10 @@ Custom property | Description | Default
       is: 'paper-slider',
 
       behaviors: [
+        Polymer.IronRangeBehavior,
         Polymer.IronA11yKeysBehavior,
         Polymer.IronFormElementBehavior,
-        Polymer.PaperInkyFocusBehavior,
-        Polymer.IronRangeBehavior
+        Polymer.PaperInkyFocusBehavior
       ],
 
       properties: {
@@ -408,6 +411,12 @@ Custom property | Description | Default
          * The immediate value of the slider.  This value is updated while the user
          * is dragging the slider.
          */
+        firstValue: {
+          type: Number,
+          value: 0,
+          notify: true
+        },
+
         immediateValue: {
           type: Number,
           value: 0,
@@ -462,8 +471,8 @@ Custom property | Description | Default
       },
 
       observers: [
-        '_updateKnob(value, min, max, snaps, step)',
-        '_valueChanged(value)',
+        '_updateKnob(firstValue, min, max, snaps, step)',
+        '_firstValueChanged(firstValue)',
         '_immediateValueChanged(immediateValue)',
         '_updateMarkers(maxMarkers, min, max, snaps)'
       ],
@@ -483,7 +492,7 @@ Custom property | Description | Default
        * @method increment
        */
       increment: function() {
-        this.value = this._clampValue(this.value + this.step);
+        this.firstValue = this._clampValue(this.firstValue + this.step);
       },
 
       /**
@@ -491,26 +500,27 @@ Custom property | Description | Default
        * @method decrement
        */
       decrement: function() {
-        this.value = this._clampValue(this.value - this.step);
+        this.firstValue = this._clampValue(this.firstValue - this.step);
       },
 
       _updateKnob: function(value, min, max, snaps, step) {
-        this.setAttribute('aria-valuemin', min);
-        this.setAttribute('aria-valuemax', max);
-        this.setAttribute('aria-valuenow', value);
+        // this.setAttribute('aria-valuemin', min);
+        // this.setAttribute('aria-valuemax', max);
+        // this.setAttribute('aria-valuenow', value);
 
         this._positionKnob(this._calcRatio(value));
       },
 
-      _valueChanged: function() {
-        this.fire('value-change');
+      _firstValueChanged: function() {
+        this.fire('first-value-change');
       },
 
       _immediateValueChanged: function() {
+        window.console.log('immediate value changed');
         if (this.dragging) {
           this.fire('immediate-value-change');
         } else {
-          this.value = this.immediateValue;
+          this.firstValue = this.immediateValue;
         }
       },
 
@@ -528,8 +538,15 @@ Custom property | Description | Default
       },
 
       _positionKnob: function(ratio) {
+        window.console.log('set immediate');
+        this._calcStep(this._calcKnobPosition(ratio));
+        window.console.log('set immediate 2');
+        // immediate seems linked to value...!
         this._setImmediateValue(this._calcStep(this._calcKnobPosition(ratio)));
+        window.console.log('set immediate');
         this._setRatio(this._calcRatio(this.immediateValue));
+
+        window.console.log('css stuff');
 
         // get first knob
         var firstKnob = Polymer.dom(this.$.sliderContainer).querySelector('.sliderKnob');
@@ -602,7 +619,7 @@ Custom property | Description | Default
         this.activeKnob.classList.remove('dragging');
         this._setDragging(false);
         this._resetKnob();
-        this.value = this.immediateValue;
+        this.firstValue = this.immediateValue;
 
         s.transform = s.webkitTransform = '';
         this._setActiveKnob(null);
@@ -628,7 +645,9 @@ Custom property | Description | Default
 
         this._setTransiting(true);
 
+        window.console.log('setting position knob');
         this._positionKnob(ratio);
+        window.console.log('position knob set');
 
         this.debounce('expandKnob', this._expandKnob, 60);
 
@@ -692,7 +711,7 @@ Custom property | Description | Default
       _incrementKey: function(event) {
         if (!this.disabled) {
           if (event.detail.key === 'end') {
-            this.value = this.max;
+            this.firstValue = this.max;
           } else {
             this.increment();
           }
@@ -703,7 +722,7 @@ Custom property | Description | Default
       _decrementKey: function(event) {
         if (!this.disabled) {
           if (event.detail.key === 'home') {
-            this.value = this.min;
+            this.firstValue = this.min;
           } else {
             this.decrement();
           }
@@ -712,7 +731,7 @@ Custom property | Description | Default
       },
 
       _changeValue: function(event) {
-        this.value = event.target.value;
+        this.firstValue = event.target.value;
         this.fire('change');
       },
 
